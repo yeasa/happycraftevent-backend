@@ -28,21 +28,24 @@ CREATE TABLE IF NOT EXISTS users (
 
     password_hash TEXT NOT NULL,
 
-    role TEXT NOT NULL CHECK (role IN ('ADMIN', 'SIDE_ADMIN')),
+    role TEXT NOT NULL CHECK (role IN ('ADMIN', 'EVENT_ADMIN')),
 
-    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    status TEXT NOT NULL DEFAULT 'Uninitialized' CHECK (status IN ('Active', 'Disabled', 'Uninitialized')),
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
 
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-COMMENT ON TABLE users IS 'System users including ADMIN and SIDE_ADMIN roles managed in code.';
+COMMENT ON TABLE users IS 'System users including ADMIN and EVENT_ADMIN roles managed in code.';
 COMMENT ON COLUMN users.is_deleted IS 'Soft delete flag; true means logically deleted.';
 COMMENT ON COLUMN users.role IS 'Role text controlled by application enum UserRole.';
+COMMENT ON COLUMN users.status IS 'Status text controlled by application enum UserStatus.';
 
--- Enforce case-insensitive uniqueness for email values.
-CREATE UNIQUE INDEX IF NOT EXISTS ux_users_email_lower ON users (LOWER(email));
+-- Enforce case-insensitive uniqueness for email on active (non-deleted) users only.
+-- This allows multiple deleted users to have the same email.
+CREATE UNIQUE INDEX IF NOT EXISTS ux_users_email_active ON users (LOWER(email))
+    WHERE is_deleted = FALSE;
 
 -- Direct email index for exact match queries.
 CREATE INDEX IF NOT EXISTS ix_users_email ON users (email);
@@ -58,8 +61,8 @@ CREATE INDEX IF NOT EXISTS ix_users_role_not_deleted
     WHERE is_deleted = FALSE;
 
 -- Helpful index for role-based filters while excluding deleted rows.
-CREATE INDEX IF NOT EXISTS ix_users_role_active_not_deleted
-    ON users (role, is_active)
+CREATE INDEX IF NOT EXISTS ix_users_role_status_not_deleted
+    ON users (role, status)
     WHERE is_deleted = FALSE;
 
 DROP TRIGGER IF EXISTS trg_users_set_updated_at ON users;
@@ -126,7 +129,7 @@ CREATE TABLE IF NOT EXISTS event_admins (
 
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
-    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    status TEXT NOT NULL DEFAULT 'Active' CHECK (status IN ('Active', 'Disabled', 'Uninitialized')),
 
     assigned_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -134,11 +137,11 @@ CREATE TABLE IF NOT EXISTS event_admins (
 );
 
 COMMENT ON TABLE event_admins IS 'Mapping table between side admins and assigned events.';
-COMMENT ON COLUMN event_admins.is_active IS 'Assignment status; false disables access without deleting mapping.';
+COMMENT ON COLUMN event_admins.status IS 'Assignment status text controlled by application enum UserStatus.';
 
 -- Separate index for event-centric lookups (UNIQUE index already supports user_id,event_id order).
 CREATE INDEX IF NOT EXISTS ix_event_admins_event_id ON event_admins (event_id);
 
--- Active assignment index for event admin authorization checks.
-CREATE INDEX IF NOT EXISTS ix_event_admins_event_id_active
-    ON event_admins (event_id, is_active);
+-- Status-based assignment index for event admin authorization checks.
+CREATE INDEX IF NOT EXISTS ix_event_admins_event_id_status
+    ON event_admins (event_id, status);
