@@ -67,6 +67,7 @@ public class UsersDal : IUsersDal
                     id          AS "Id",
                     first_name  AS "FirstName",
                     last_name   AS "LastName",
+                    gender       AS "Gender",
                     email       AS "Email",
                     phone       AS "Phone",
                     role        AS "Role",
@@ -105,13 +106,14 @@ public class UsersDal : IUsersDal
 
             const string upsertSql = """
                 INSERT INTO users
-                    (email, password_hash, first_name, last_name, phone, role, status, created_at, updated_at)
+                    (email, password_hash, first_name, last_name, gender, phone, role, status, created_at, updated_at)
                 VALUES
-                    (@Email, @PasswordHash, @FirstName, @LastName, @Phone, @Role, @Status, NOW(), NOW())
+                    (@Email, @PasswordHash, @FirstName, @LastName, @Gender, @Phone, @Role, @Status, NOW(), NOW())
                 ON CONFLICT (LOWER(email)) WHERE is_deleted = FALSE
                 DO UPDATE SET
                     first_name = COALESCE(@FirstName, users.first_name),
                     last_name  = COALESCE(@LastName,  users.last_name),
+                    gender  = COALESCE(@Gender,  users.gender),
                     phone      = COALESCE(@Phone,     users.phone),
                     role       = COALESCE(@Role,      users.role),
                     status     = COALESCE(@Status,    users.status)
@@ -124,6 +126,7 @@ public class UsersDal : IUsersDal
                 PasswordHash = passwordHash,
                 request.FirstName,
                 request.LastName,
+                Gender = request.Gender?.ToString(),
                 request.Phone,
                 Role   = request.Role?.ToString(),
                 Status = request.Status?.ToString()

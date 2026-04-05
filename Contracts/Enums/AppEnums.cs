@@ -18,3 +18,10 @@ public enum UserStatus
     Disabled,
     Uninitialized
 }
+
+public enum GendersEnum
+{
+    Male,
+    Female,
+    Other
+}
