@@ -1,3 +1,5 @@
+using HappyCraftEvent.Contracts.Enums;
+
 namespace HappyCraftEvent.Contracts.DTOs.Users;
 
 public class UserListQueryDto
@@ -6,6 +8,7 @@ public class UserListQueryDto
     public int     PagePerRow { get; set; } = 10;
     public string? FirstName  { get; set; }
     public string? LastName   { get; set; }
+    public GendersEnum? Gender   { get; set; }
     public string? Email      { get; set; }
     public string? Phone      { get; set; }
 }

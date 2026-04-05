@@ -1,4 +1,4 @@
-@happycraftevent_HostAddress = http://localhost:5245
+@happycraftevent_HostAddress = http://localhost:5299
 
 GET {{happycraftevent_HostAddress}}/weatherforecast/
 Accept: application/json

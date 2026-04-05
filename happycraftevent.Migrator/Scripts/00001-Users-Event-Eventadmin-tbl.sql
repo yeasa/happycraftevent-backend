@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS users (
     email TEXT NOT NULL,
     phone TEXT,
 
+    gender TEXT ,
     password_hash TEXT NOT NULL,
 
     role TEXT NOT NULL CHECK (role IN ('ADMIN', 'EVENT_ADMIN')),

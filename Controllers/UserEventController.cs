@@ -2,12 +2,14 @@ using HappyCraftEvent.Contracts.DTOs.Users;
 using HappyCraftEvent.Contracts.Enums;
 using HappyCraftEvent.Contracts.StatusCodes;
 using HappyCraftEvent.Helper.IService;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HappyCraftEvent.Controllers;
 
 [ApiController]
-[Route("api/userevent")]
+[Route("api/")]
+[Authorize]
 public class UserEventController : ControllerBase
 {
     private readonly IUserService _userService;
@@ -20,6 +22,7 @@ public class UserEventController : ControllerBase
     }
 
     [HttpGet("user-list")]
+    [Authorize(Policy = "Scope:UsersRead")]
     public async Task<IActionResult> GetUsers([FromQuery] UserListQueryDto query)
     {
         try
@@ -40,6 +43,7 @@ public class UserEventController : ControllerBase
     }
 
     [HttpPost("user-upsert")]
+    [Authorize(Policy = "Scope:UsersWrite")]
     public async Task<IActionResult> UpsertUser(
         [FromQuery] OperationType operation,
         [FromBody]  UpsertUserRequestDto request)
