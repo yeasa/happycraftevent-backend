@@ -127,7 +127,14 @@ public class AuthService : IAuthService
 
             // Store new refresh token and revoke old one
             var expiresAt = DateTime.UtcNow.AddDays(14);
-            await _authDal.RevokeRefreshTokenAsync(refreshTokenHash, newRefreshTokenHash, ipAddress);
+            var (revokeStatus, revokeSuccess) = await _authDal.RevokeRefreshTokenAsync(refreshTokenHash, newRefreshTokenHash, ipAddress);
+            
+            if (!revokeSuccess)
+            {
+                _logger.LogError("Failed to revoke old refresh token during rotation for user: {UserId}. Aborting rotation.", userId);
+                return (revokeStatus, null);
+            }
+
             var (_, storeSuccess) = await _authDal.StoreRefreshTokenAsync(userId.Value, newRefreshTokenHash, expiresAt, ipAddress);
 
             if (!storeSuccess)

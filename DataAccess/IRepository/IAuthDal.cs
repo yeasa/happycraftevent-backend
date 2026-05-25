@@ -5,7 +5,7 @@ namespace HappyCraftEvent.DataAccess.IRepository;
 public interface IAuthDal
 {
     /// <summary>
-    /// Retrieves user by email if active and not deleted, returns UserDto and password hash.
+    /// Retrieves user by email, returns UserDto and password hash.
     /// </summary>
     Task<(int statusCode, UserDto user, string passwordHash)?> GetUserByEmailAsync(string email);
 
