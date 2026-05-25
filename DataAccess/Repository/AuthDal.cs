@@ -4,8 +4,6 @@ using HappyCraftEvent.Contracts.Enums;
 using HappyCraftEvent.Contracts.StatusCodes;
 using HappyCraftEvent.DataAccess.IRepository;
 using Npgsql;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace HappyCraftEvent.DataAccess.Repository;
 
@@ -22,13 +20,6 @@ public class AuthDal : IAuthDal
     }
 
     private NpgsqlConnection CreateConnection() => new(_connectionString);
-
-    private static string HashToken(string token)
-    {
-        using var sha256 = SHA256.Create();
-        var hash = sha256.ComputeHash(Encoding.UTF8.GetBytes(token));
-        return Convert.ToBase64String(hash);
-    }
 
     public async Task<(int statusCode, UserDto user, string passwordHash)?> GetUserByEmailAsync(string email)
     {
@@ -56,12 +47,17 @@ public class AuthDal : IAuthDal
                 Email = (string)result.email,
                 FirstName = (string)result.first_name,
                 LastName = (string?)result.last_name,
-                Gender = result.gender is not null ? Enum.Parse<GendersEnum>((string)result.gender) : null,
-                Role = Enum.Parse<UserRole>((string)result.role),
-                Status = Enum.Parse<UserStatus>((string)result.status),
+                Gender = result.gender is not null && Enum.TryParse<GendersEnum>((string)result.gender, ignoreCase: true, out var gender) ? gender : null,
+                Role = Enum.TryParse<UserRole>((string)result.role, ignoreCase: true, out var role) ? role : UserRole.User,
+                Status = Enum.TryParse<UserStatus>((string)result.status, ignoreCase: true, out var status) ? status : UserStatus.Inactive,
                 CreatedAt = (DateTime)result.created_at,
                 UpdatedAt = (DateTime)result.updated_at
             };
+
+            if (!Enum.TryParse<UserRole>((string)result.role, ignoreCase: true, out _))
+                _logger.LogWarning("Invalid role value '{Role}' for user {UserId}, defaulting to User", result.role, result.id);
+            if (!Enum.TryParse<UserStatus>((string)result.status, ignoreCase: true, out _))
+                _logger.LogWarning("Invalid status value '{Status}' for user {UserId}, defaulting to Inactive", result.status, result.id);
 
             return (HappyCraftStatusCode.OK, userDto, (string)result.password_hash);
         }
@@ -201,18 +197,25 @@ public class AuthDal : IAuthDal
             if (result is null)
                 return null;
 
-            return new UserDto
+            var userDto = new UserDto
             {
                 Id = (Guid)result.id,
                 Email = (string)result.email,
                 FirstName = (string)result.first_name,
                 LastName = (string?)result.last_name,
-                Gender = result.gender is not null ? Enum.Parse<GendersEnum>((string)result.gender) : null,
-                Role = Enum.Parse<UserRole>((string)result.role),
-                Status = Enum.Parse<UserStatus>((string)result.status),
+                Gender = result.gender is not null && Enum.TryParse<GendersEnum>((string)result.gender, ignoreCase: true, out var gender) ? gender : null,
+                Role = Enum.TryParse<UserRole>((string)result.role, ignoreCase: true, out var role) ? role : UserRole.User,
+                Status = Enum.TryParse<UserStatus>((string)result.status, ignoreCase: true, out var status) ? status : UserStatus.Inactive,
                 CreatedAt = (DateTime)result.created_at,
                 UpdatedAt = (DateTime)result.updated_at
             };
+
+            if (!Enum.TryParse<UserRole>((string)result.role, ignoreCase: true, out _))
+                _logger.LogWarning("Invalid role value '{Role}' for user {UserId}, defaulting to User", result.role, result.id);
+            if (!Enum.TryParse<UserStatus>((string)result.status, ignoreCase: true, out _))
+                _logger.LogWarning("Invalid status value '{Status}' for user {UserId}, defaulting to Inactive", result.status, result.id);
+
+            return userDto;
         }
         catch (Exception ex)
         {

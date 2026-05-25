@@ -146,3 +146,28 @@ CREATE INDEX IF NOT EXISTS ix_event_admins_event_id ON event_admins (event_id);
 -- Status-based assignment index for event admin authorization checks.
 CREATE INDEX IF NOT EXISTS ix_event_admins_event_id_status
     ON event_admins (event_id, status);
+
+
+-- =========================================
+-- seeding initial data - User 
+
+INSERT INTO users (
+    first_name,
+    last_name,
+    email,
+    phone,
+    gender,
+    password_hash,
+    role,
+    status
+)
+VALUES (
+    'Dipak',
+    'Mourya',
+    'depakmourya2000@gmail.com',
+    '8910171611',
+    NULL,
+    crypt('Abc1234$', gen_salt('bf')), -- hashed password
+    'ADMIN',
+    'Active'
+);

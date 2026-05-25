@@ -20,6 +20,7 @@ if (File.Exists(envPath))
 // Register Dapper type handlers so TEXT columns map to enum types.
 SqlMapper.AddTypeHandler(new EnumTypeHandler<UserRole>());
 SqlMapper.AddTypeHandler(new EnumTypeHandler<UserStatus>());
+SqlMapper.AddTypeHandler(new EnumTypeHandler<GendersEnum>());
 
 var builder = WebApplication.CreateBuilder(args);
 
